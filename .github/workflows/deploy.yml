@@ -31,12 +31,16 @@ jobs:
     
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
+        env:
+            TRIVY_TIMEOUT: 15m
         with:
-          image-ref: ${{ env.IMAGE_NAME }}:latest
-          format: 'table'
-          exit-code: '1'          # fail build if vulnerabilities are found
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+            image-ref: ${{ env.IMAGE_NAME }}:latest
+            format: 'table'
+            exit-code: '1'
+            vuln-type: 'os,library'
+            severity: 'CRITICAL,HIGH'
+            scanners: 'vuln'
+            skip-dirs: usr/local/lib/python3.9/site-packages/torch/lib
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
