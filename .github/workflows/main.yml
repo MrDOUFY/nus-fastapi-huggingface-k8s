@@ -14,19 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     environment: prd
     outputs:
-      image_tag: ${{ steps.set_tag.outputs.image_tag }}   # 👈 expose it as job output
+      image_tag: ${{ steps.set_tag.outputs.image_tag }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Set image tag
         id: set_tag
-        run: |
-          echo "image_tag=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
+        run: echo "image_tag=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Build and push multi-arch image
         run: |
@@ -59,17 +58,16 @@ jobs:
     needs: trivy_scan
     environment: prd
     steps:
-      - name: Install doctl (DigitalOcean CLI)
-        run: |
-          sudo snap install doctl --classic
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_API_TOKEN }}
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
+      - name: Configure kubeconfig from DigitalOcean
+        run: doctl kubernetes cluster kubeconfig save my-cluster
 
-      - name: Configure kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_CONTENT }}" > ~/.kube/config
+      - name: Verify cluster connection
+        run: kubectl get nodes
 
       - name: Deploy to Kubernetes
         run: |
@@ -77,4 +75,3 @@ jobs:
             gptcontainer=${{ env.IMAGE_NAME }}:${{ needs.build_and_push.outputs.image_tag }} \
             -n ${{ env.KUBE_NAMESPACE }}
           kubectl rollout status deployment/${{ env.KUBE_DEPLOYMENT }} -n ${{ env.KUBE_NAMESPACE }}
-
