@@ -59,6 +59,10 @@ jobs:
     needs: trivy_scan
     environment: prd
     steps:
+      - name: Install doctl (DigitalOcean CLI)
+        run: |
+          sudo snap install doctl --classic
+
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
 
@@ -73,3 +77,4 @@ jobs:
             gptcontainer=${{ env.IMAGE_NAME }}:${{ needs.build_and_push.outputs.image_tag }} \
             -n ${{ env.KUBE_NAMESPACE }}
           kubectl rollout status deployment/${{ env.KUBE_DEPLOYMENT }} -n ${{ env.KUBE_NAMESPACE }}
+
