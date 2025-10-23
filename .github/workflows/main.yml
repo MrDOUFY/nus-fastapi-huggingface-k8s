@@ -72,6 +72,6 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           kubectl set image deployment/${{ env.KUBE_DEPLOYMENT }} \
-            gptcontainer=${{ env.IMAGE_NAME }}:${{ needs.build_and_push.outputs.image_tag }} \
+            gptcontainer=${{ env.IMAGE_NAME }}:latest \
             -n ${{ env.KUBE_NAMESPACE }}
           kubectl rollout status deployment/${{ env.KUBE_DEPLOYMENT }} -n ${{ env.KUBE_NAMESPACE }}
